@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator Perangkat Ajar Guru</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+  }
+  header h1 { font-size: 26px; margin-bottom: 8px; }
+  header p { opacity: 0.95; font-size: 14px; }
+  .content { padding: 30px; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-weight: 600; margin-bottom: 6px; color: #333; font-size: 14px; }
+  input, select, textarea {
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border 0.3s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #4facfe; }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    width: 100%;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,172,254,0.4); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-secondary { background: #f0f0f0; color: #333; flex: 1; }
+  .btn-secondary:hover { background: #e0e0e0; }
+  .btn-print {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    flex: 1;
+  }
+  .btn-print:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56,239,125,0.4); }
+
+  #output {
+    display: none;
+    margin-top: 30px;
+    padding: 30px;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 2px dashed #ddd;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #333;
+  }
+  .loading {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+  }
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 16px; height: 16px;
+    margin-left: 8px;
+    border: 2px solid #4facfe;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    header, .content > form, .btn-group, .no-print { display: none !important; }
+    .container { box-shadow: none; border-radius: 0; }
+    #output { display: block !important; margin: 0; padding: 20px; border: none; background: white; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📚 Generator Perangkat Ajar Guru</h1>
+    <p>Ditenagai AI — Gratis</p>
+  </header>
+
+  <div class="content">
+    <form id="formAjar" onsubmit="generateDoc(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nama Guru</label>
+          <input type="text" id="guru" placeholder="cth: Budi Santoso, S.Pd." required>
+        </div>
+        <div class="form-group">
+          <label>Nama Sekolah</label>
+          <input type="text" id="sekolah" placeholder="cth: SMP Negeri 1 Jakarta" required>
+        </div>
+        <div class="form-group">
+          <label>Mata Pelajaran</label>
+          <input type="text" id="mapel" placeholder="cth: Matematika" required>
+        </div>
+        <div class="form-group">
+          <label>Kelas / Fase</label>
+          <select id="kelas" required>
+            <option value="">-- Pilih --</option>
+            <option value="1 / A">Kelas 1 (Fase A)</option>
+            <option value="2 / A">Kelas 2 (Fase A)</option>
+            <option value="3 / B">Kelas 3 (Fase B)</option>
+            <option value="4 / B">Kelas 4 (Fase B)</option>
+            <option value="5 / C">Kelas 5 (Fase C)</option>
+            <option value="6 / C">Kelas 6 (Fase C)</option>
+            <option value="7 / D">Kelas 7 (Fase D)</option>
+            <option value="8 / D">Kelas 8 (Fase D)</option>
+            <option value="9 / D">Kelas 9 (Fase D)</option>
+            <option value="10 / E">Kelas 10 (Fase E)</option>
+            <option value="11 / F">Kelas 11 (Fase F)</option>
+            <option value="12 / F">Kelas 12 (Fase F)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Semester</label>
+          <select id="semester" required>
+            <option value="1 (Ganjil)">1 (Ganjil)</option>
+            <option value="2 (Genap)">2 (Genap)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Alokasi Waktu</label>
+          <input type="text" id="waktu" placeholder="cth: 2 × 40 menit" value="2 × 40 menit" required>
+        </div>
+        <div class="form-group full">
+          <label>Materi / Topik Pembelajaran</label>
+          <input type="text" id="materi" placeholder="cth: Operasi Bilangan Bulat" required>
+        </div>
+        <div class="form-group full">
+          <label>Tujuan Pembelajaran (pisahkan dengan enter)</label>
+          <textarea id="tujuan" placeholder="Siswa dapat menjelaskan konsep bilangan bulat&#10;Siswa dapat melakukan operasi penjumlahan bilangan bulat" required></textarea>
+        </div>
+      </div>
+
+      <button type="submit" id="btnGenerate" class="btn btn-primary">✨ Generate Perangkat Ajar</button>
+    </form>
+
+    <div class="btn-group" id="actionButtons" style="display:none;">
+      <button class="btn btn-secondary" onclick="editUlang()">✏️ Edit Ulang</button>
+      <button class="btn btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+    </div>
+
+    <div id="output"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GANTI DENGAN ALAMAT CLOUDFLARE WORKER ANDA
+// Contoh: https://perangkat-ajar-proxy.username.workers.dev
+// ============================================================
+const PROXY_URL = 'https://perangkat-ajar-proxy.GANTI-USERNAME.workers.dev';
+
+function buildPrompt(d) {
+  return `
+Buatkan perangkat ajar lengkap dengan informasi berikut:
+- Guru: ${d.guru}
+- Sekolah: ${d.sekolah}
+- Mata Pelajaran: ${d.mapel}
+- Kelas/Fase: ${d.kelas}
+- Semester: ${d.semester}
+- Alokasi Waktu: ${d.waktu}
+- Materi: ${d.materi}
+- Tujuan Pembelajaran:
+${d.tujuan.map(t => '- ' + t).join('\n')}
+
+Output harus mencakup bagian-bagian berikut, gunakan judul bagian yang jelas:
+1. IDENTITAS
+2. ALUR TUJUAN PEMBELAJARAN (ATP) — berupa tabel sederhana
+3. MODUL AJAR — mencakup tujuan, langkah kegiatan (Pendahuluan / Inti / Penutup dengan alokasi waktu), media & sumber belajar
+4. LKPD — petunjuk dan pertanyaan diskusi yang SESUAI dengan materi
+5. ASESMEN — formatif dan sumatif beserta rubrik penilaian
+6. REFLEKSI — untuk guru dan siswa
+
+Sesuaikan konten dengan karakteristik Kurikulum Merdeka Indonesia. Gunakan bahasa Indonesia yang baku dan rapi.
+`.trim();
+}
+
+async function generateDoc(e) {
+  e.preventDefault();
+
+  const data = {
+    guru: document.getElementById('guru').value,
+    sekolah: document.getElementById('sekolah').value,
+    mapel: document.getElementById('mapel').value,
+    kelas: document.getElementById('kelas').value,
+    semester: document.getElementById('semester').value,
+    waktu: document.getElementById('waktu').value,
+    materi: document.getElementById('materi').value,
+    tujuan: document.getElementById('tujuan').value.split('\n').filter(t => t.trim()),
+  };
+
+  const outputDiv = document.getElementById('output');
+  const btn = document.getElementById('btnGenerate');
+  outputDiv.style.display = 'block';
+  outputDiv.innerHTML = '<div class="loading">⏳ AI sedang menyusun perangkat ajar</div>';
+  document.getElementById('actionButtons').style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = '⏳ Memproses...';
+
+  try {
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: buildPrompt(data) })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const result = await res.json();
+    outputDiv.textContent = result.content || '(kosong)';
+    document.getElementById('actionButtons').style.display = 'flex';
+  } catch (err) {
+    outputDiv.innerHTML = `<p style="color:#c62828;">❌ Gagal: ${err.message}</p>
+      <p style="font-size:13px;color:#666;margin-top:8px;">
+        Periksa koneksi internet atau hubungi admin (proxy AI mungkin sedang down).
+      </p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Generate Perangkat Ajar';
+  }
+}
+
+function editUlang() {
+  document.getElementById('output').style.display = 'none';
+  document.getElementById('actionButtons').style.display = 'none';
+  document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
